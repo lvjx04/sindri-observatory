@@ -1,0 +1,48 @@
+#runner-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 18px;
+  border-bottom: 1px solid #d1d9e0;
+  background: #f6f8fa;
+  color: #59636e;
+  font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#runner-status strong {
+  color: #1f2328;
+  white-space: nowrap;
+}
+
+#runner-run {
+  color: #0969da;
+  text-decoration: underline;
+}
+
+#runner-time {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.app {
+  height: calc(100dvh - 36px);
+}
+
+@media (max-width: 720px) {
+  #runner-status {
+    height: 72px;
+    gap: 2px 10px;
+    flex-wrap: wrap;
+    align-content: center;
+  }
+
+  #runner-time {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app {
+    height: calc(100dvh - 72px);
+  }
+}

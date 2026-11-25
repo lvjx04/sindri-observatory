@@ -1,0 +1,41 @@
+name: Deploy Observatory
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: observatory-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.repository == 'lvjx04/sindri-observatory' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, observatory]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Publish static files
+        run: python3 scripts/deploy.py
+      - name: Verify served deployment
+        run: |
+          curl --noproxy '*' --fail --silent --show-error \
+            http://127.0.0.1/deployment.json > "$RUNNER_TEMP/observatory-served.json"
+          python3 - "$RUNNER_TEMP/observatory-served.json" <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          served = json.loads(Path(sys.argv[1]).read_text())
+          expected = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert served['commit'] == expected, (served['commit'], expected)
+          print('Serving commit', expected)
+          PY

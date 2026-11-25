@@ -1,0 +1,39 @@
+name: Simulate runner update
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: observatory-runner-demo
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.repository == 'lvjx04/sindri-observatory' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, observatory]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+      - name: Generate and commit demo record
+        run: |
+          python3 scripts/simulate_runner.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/runner-demo.json
+          git commit -m "Update runner demo from run $GITHUB_RUN_ID"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          exit 1
+      - name: Trigger deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # GITHUB_TOKEN pushes suppress push-triggered workflows. Dispatch explicitly.
+        run: gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref main
